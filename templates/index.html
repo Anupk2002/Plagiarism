@@ -358,7 +358,22 @@
         }
     });
 </script>
+    <script>
+        document.getElementById("downloadResults").addEventListener("click", () => {
+            // Import jsPDF
+            const { jsPDF } = window.jspdf;
 
+            // Create a new PDF instance
+            const doc = new jsPDF();
+
+            // Add content to the PDF
+            const content = document.getElementById("resultsContent").innerText;
+            doc.text(content, 10, 10);
+
+            // Save the PDF
+            doc.save("Results.pdf");
+        });
+    </script>
         <!-- Form to upload multiple PDFs for offline storage -->
     <form id="storeForm" action="/store_files" method="POST" enctype="multipart/form-data">
         <label for="storeFiles">Upload PDF files for storage (Offline Mode):</label>
