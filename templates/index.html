@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plagiarism Detection System</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e1f5ff;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            background-color: #007BFF;
+            color: #fff;
+            padding: 20px 0;
+            margin: 0;
+            font-size: 2.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 96%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        input[type="file"],
+        button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+        }
+
+        input[type="file"] {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: auto
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #resultsTable {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: #fff;
+        }
+
+        #resultsTable th, #resultsTable td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #resultsTable th {
+            background-color: #007BFF;
+            color: white;
+            font-size: 1rem;
+        }
+
+        #resultsTable tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #detailedCopiedTextContainer {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .file-copied-text {
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #007BFF;
+            border-radius: 8px;
+            background-color: #e9f4ff;
+            transition: transform 0.3s;
+        }
+
+        .file-copied-text:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .copiedText {
+            color: #333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        #printResults, #downloadResults {
+            width: 45%;
+            margin: 10px 2%;
+            display: inline-block;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        #offlineResults, #onlineResults {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }      
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+    
+        #resultsTable th, #resultsTable td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+    
+        #resultsTable th {
+            background-color: #007BFF;
+            color: white;
+        }
+    
+        #resultsTable td {
+            background-color: #f9f9f9;
+        }
+    
+        /* Style for the copied text section */
+        #detailedCopiedTextContainer {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    
+        #detailedCopiedTextContainer h3 {
+            margin-bottom: 15px;
+            color: #343a40;
+        }
+    
+        .file-copied-text {
+            background-color: #ffffff;  /* White background for each file's copied text */
+            padding: 15px;
+            border: 1px solid #007BFF;  /* Blue border to distinguish each block */
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: transform 0.2s;  /* Add a transition effect for hover */
+        }
+    
+        .file-copied-text:hover {
+            transform: scale(1.02);  /* Slightly scale up on hover */
+        }
+    
+        .copiedText {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #495057;  /* Darker text color for better readability */
+            font-size: 14px;  /* Font size for copied text */
+        }
+        .buttonres{
+            padding-left: 35%;
+            padding-right: 35%;
+        }
+       
+    </style>
+    
+</head>
+<body>
+    <h1>Plagiarism Detection System</h1>
+     <!-- Form to check plagiarism online -->
+     <form id="onlineForm">
+        <textarea id="onlineTextInput" placeholder="Enter text to check..."></textarea>
+        <label for="onlineCheckFile">Upload a PDF file for online checking:</label>
+        <input type="file" id="onlineCheckFile" accept="application/pdf">
+        <button type="submit">Check Online Plagiarism</button>
+    </form>
+    <div id="onlineResults"><hr></div>
+    <div class="buttonres">
+    <button id="printResults" style="display:none;">Print Results</button>
+    <button id="downloadResults" style="display:none;">Download Results</button>
+    </div>
+<script>
+    // Handle plagiarism check online
+    document.getElementById('onlineForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const text = document.getElementById('onlineTextInput').value;
+        const file = document.getElementById('onlineCheckFile').files[0];
+
+        const formData = new FormData();
+        formData.append('text', text);
+        if (file) {
+            formData.append('file', file);
+        }
+
+        const response = await fetch('/check_online', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        let output = '<h3>Online Plagiarism Results:</h3>';
+
+        // Display online plagiarism results
+        if (result.copied) {
+            output += '<h4>Matching Sources:</h4>';
+            result.sources.forEach(source => {
+                output += `<p>Source: <a href="${source.source}" target="_blank">${source.source}</a></p>`;
+                output += `<p>Matching Text: <span style="background-color: yellow;">${source.matching_text}</span></p>`;
+            });
+            const copiedPercentage = result.percentage_copied.toFixed(2);
+            output += `<h2 class="highlighted">Online Copied Percentage: ${copiedPercentage}%</h2>`;
+            output += '<canvas id="pieChart" style="max-width: 400px; margin: 20px auto;"></canvas>';
+        } else {
+            output += '<p>No matching sources found.</p>';
+        }
+
+        const resultsDiv = document.getElementById('onlineResults');
+        resultsDiv.innerHTML = output;
+
+        // Generate the pie chart if results are available
+        if (result.copied) {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Copied', 'Original'],
+                    datasets: [{
+                        data: [result.percentage_copied, 100 - result.percentage_copied],
+                        backgroundColor: ['#FF5733', '#33FF57']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        // Show the print and download buttons
+        document.getElementById('printResults').style.display = 'inline-block';
+        document.getElementById('downloadResults').style.display = 'inline-block';
+    });
+
+    // Print Results
+    document.getElementById('printResults').addEventListener('click', function () {
+        const resultsDiv = document.getElementById('onlineResults');
+        const canvas = document.querySelector('#pieChart');
+
+        if (canvas) {
+            // Convert canvas to image
+            const imgData = canvas.toDataURL('image/png');
+            const imgElement = `<img src="${imgData}" style="max-width: 100%; margin: 20px auto;"/>`;
+            const content = resultsDiv.innerHTML.replace('<canvas id="pieChart"', imgElement);
+
+            const styles = `<style>
+                body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
+                h3, h4 { color: #0056b3; }
+                p { margin: 5px 0; }
+                a { color: #0056b3; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+                .highlighted { font-size: 1.5em; font-weight: bold; color: #FF5733; text-align: center; margin-top: 20px; }
+                span[style] { background-color: yellow; padding: 2px; }
+            </style>`;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.open();
+            printWindow.document.write(`
+                <html>
+                    <head><title>Plagiarism Results</title>${styles}</head>
+                    <body>${content}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    });
+
+    // Download Results
+    document.getElementById('downloadResults').addEventListener('click', function () {
+        const resultsDiv = document.getElementById('onlineResults');
+        const canvas = document.querySelector('#pieChart');
+
+        if (canvas) {
+            // Convert canvas to image
+            const imgData = canvas.toDataURL('image/png');
+            const imgElement = `<img src="${imgData}" style="max-width: 100%; margin: 20px auto;"/>`;
+            const content = resultsDiv.innerHTML.replace('<canvas id="pieChart"', imgElement);
+
+            const blob = new Blob([content], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'plagiarism_results.html';
+            link.click();
+        }
+    });
+</script>
+
+        <!-- Form to upload multiple PDFs for offline storage -->
+    <form id="storeForm" action="/store_files" method="POST" enctype="multipart/form-data">
+        <label for="storeFiles">Upload PDF files for storage (Offline Mode):</label>
+        <input type="file" id="storeFiles" name="files" multiple accept="application/pdf">
+        <button type="submit">Store Files</button>
+    </form>
+    <div id="storeResult"></div>
+
+    <!-- Form to check plagiarism offline -->
+    <form id="offlineForm" action="/check_offline" method="POST" enctype="multipart/form-data">
+        <label for="checkFile">Upload a PDF file to check against stored PDFs (Offline Mode):</label>
+        <input type="file" id="checkFile" accept="application/pdf">
+        <button type="submit">Check Offline Plagiarism</button>
+    </form>
+    <div id="offlineResults"></div>
+
+    <!-- Table to display plagiarism results -->
+    <div id="accuracyResults">
+        <table id="resultsTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>String Matching (%)</th>
+                    <th>Time Taken (String Matching)</th>
+                    <th>Cosine Similarity (%)</th>
+                    <th>Time Taken (Cosine Similarity)</th>
+                    <!-- Removed LCS and time columns -->
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Section to display detailed copied text -->
+    <div id="detailedCopiedTextContainer" style="display: none;">
+        <h3>Copied Text from Each Source:</h3>
+        <div id="detailedCopiedText"></div>
+    </div>
+
+    <script>
+        // Handle file storage form submission
+        document.getElementById('storeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const files = document.getElementById('storeFiles').files;
+
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+
+            const response = await fetch('/store_files', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            document.getElementById('storeResult').innerHTML = result.message;
+        });
+
+        // Handle offline plagiarism check form submission
+        document.getElementById('offlineForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const file = document.getElementById('checkFile').files[0];
+
+            const formData = new FormData();
+            if (file) {
+                formData.append('file', file);
+            }
+
+            const response = await fetch('/check_offline', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';  // Clear previous results
+
+            if (result.copied) {
+                // Populate the table with comparison results
+                result.results.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${entry.file}</td>
+                        <td>${entry.string_match.toFixed(2)}</td>
+                        <td>${entry.time_taken_string_match.toFixed(2)} s</td>
+                        <td>${entry.cosine_similarity.toFixed(2)}</td>
+                        <td>${entry.time_taken_cosine.toFixed(2)} s</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Show the table
+                document.getElementById('resultsTable').style.display = 'table';
+
+                // Display detailed copied text for each source
+                const detailedCopiedTextContainer = document.getElementById('detailedCopiedText');
+                detailedCopiedTextContainer.innerHTML = ''; // Clear previous detailed copied texts
+                result.detailed_copied_texts.forEach(item => {
+                    const copiedTextDiv = document.createElement('div');
+                    copiedTextDiv.className = 'file-copied-text';
+                    copiedTextDiv.innerHTML = `<strong>From File: ${item.file}</strong><p class="copiedText">${item.copied_text}</p>`;
+                    detailedCopiedTextContainer.appendChild(copiedTextDiv);
+                });
+                document.getElementById('detailedCopiedTextContainer').style.display = 'block';
+
+            } else {
+                document.getElementById('offlineResults').innerHTML = '<p>No matching sources found.</p>';
+                document.getElementById('detailedCopiedTextContainer').style.display = 'none'; // Hide if no matches
+            }
+        });
+    </script>
+    
+    
+</body>
+</html>
