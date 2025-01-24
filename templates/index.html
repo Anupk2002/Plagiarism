@@ -6,6 +6,8 @@
     <title>Plagiarism Detection System</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
 
     <style>
 
@@ -340,40 +342,30 @@
     });
 
     // Download Results
-    document.getElementById('downloadResults').addEventListener('click', function () {
-        const resultsDiv = document.getElementById('onlineResults');
-        const canvas = document.querySelector('#pieChart');
+    // Download Results as PDF
+document.getElementById('downloadResults').addEventListener('click', function () {
+    // Ensure jsPDF is loaded
+    const { jsPDF } = window.jspdf;
 
-        if (canvas) {
-            // Convert canvas to image
-            const imgData = canvas.toDataURL('image/png');
-            const imgElement = `<img src="${imgData}" style="max-width: 100%; margin: 20px auto;"/>`;
-            const content = resultsDiv.innerHTML.replace('<canvas id="pieChart"', imgElement);
+    // Create a new jsPDF instance
+    const doc = new jsPDF();
 
-            const blob = new Blob([content], { type: 'text/html' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'plagiarism_results.html';
-            link.click();
-        }
-    });
+    // Get the content of the results div
+    const resultsDiv = document.getElementById('onlineResults');
+    const content = resultsDiv ? resultsDiv.innerText : 'No results available to download.';
+
+    // Add content to the PDF
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 10;
+    const textWidth = pageWidth - 2 * margin;
+    doc.text(content, margin, 20, { maxWidth: textWidth });
+
+    // Save the PDF with a filename
+    doc.save('Results.pdf');
+});
+
 </script>
-    <script>
-        document.getElementById("downloadResults").addEventListener("click", () => {
-            // Import jsPDF
-            const { jsPDF } = window.jspdf;
 
-            // Create a new PDF instance
-            const doc = new jsPDF();
-
-            // Add content to the PDF
-            const content = document.getElementById("resultsContent").innerText;
-            doc.text(content, 10, 10);
-
-            // Save the PDF
-            doc.save("Results.pdf");
-        });
-    </script>
         <!-- Form to upload multiple PDFs for offline storage -->
     <form id="storeForm" action="/store_files" method="POST" enctype="multipart/form-data">
         <label for="storeFiles">Upload PDF files for storage (Offline Mode):</label>
