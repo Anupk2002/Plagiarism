@@ -341,47 +341,20 @@
         }
     });
 
-// Download Results as PDF
-document.getElementById('downloadResults').addEventListener('click', function () {
-    // Ensure jsPDF is loaded
-    const { jsPDF } = window.jspdf;
+ document.getElementById('downloadResults').addEventListener('click', function () {
+            const resultsDiv = document.getElementById('onlineResults');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
 
-    // Create a new jsPDF instance
-    const doc = new jsPDF();
-
-    // Add CSS Styles
-    const styles = `
-        body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
-        h3, h4 { color: #0056b3; }
-        p { margin: 5px 0; }
-        a { color: #0056b3; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .highlighted { font-size: 1.5em; font-weight: bold; color: #FF5733; text-align: center; margin-top: 20px; }
-        span[style] { background-color: yellow; padding: 2px; }
-    `;
-    doc.addFileToVFS("styles.css", styles);
-
-    // Get the content of the results div
-    const resultsDiv = document.getElementById('onlineResults');
-    const content = resultsDiv ? resultsDiv.innerText : 'No results available to download.';
-
-    // Add text content to PDF
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 10;
-    const textWidth = pageWidth - 2 * margin;
-    doc.text(content, margin, 20, { maxWidth: textWidth });
-
-    // Add the pie chart to the PDF if it exists
-    const canvas = document.querySelector('#pieChart');
-    if (canvas) {
-        const imgData = canvas.toDataURL('image/png'); // Convert the canvas to base64 image
-        doc.addImage(imgData, 'PNG', margin, 30, pageWidth - 2 * margin, 100); // Add it to the PDF
-    }
-
-    // Save the PDF with a filename
-    doc.save('Results.pdf');
-});
-
+            // Convert HTML to PDF
+            pdf.html(resultsDiv, {
+                callback: function (doc) {
+                    doc.save('plagiarism_results.pdf');
+                },
+                x: 10,
+                y: 10
+            });
+        });
 </script>
 
         <!-- Form to upload multiple PDFs for offline storage -->
