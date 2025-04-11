@@ -3,32 +3,557 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plagiarism Detection System</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>PlagXpert - Plagiarism Detection System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
+    html {
+  margin: o;
+  padding: 0 ;
+    overflow-x: hidden;
+}
 
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #e1f5ff;
+
+
+#plagiarism-percentage {
+    font-size: 32px;
+    color: red;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+                .results-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin: 20px 0;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .results-summary {
+            background-color: #e9f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007BFF;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .summary-item strong {
+            color: #007BFF;
+        }
+
+        .source-result {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            border-left: 3px solid #007BFF;
+        }
+
+        .source-result:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .source-url {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .source-url:hover {
+            text-decoration: underline;
+        }
+
+        .similarity-score {
+            background-color: #007BFF;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .matched-text {
+            background-color: #fff8e1;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 3px solid #ffc107;
+        }
+
+        .show-more-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .show-more-btn {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .show-more-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .hidden-results {
+            display: none;
+        }
+
+        /* Enhanced PDF styles */
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007BFF;
+        }
+
+        .pdf-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007BFF;
+            margin-bottom: 10px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .similarity-score {
+                margin-top: 10px;
+            }
+            
+            .source-header {
+                flex-direction: column;
+            }
+        }
+        /* Global Styles */
+        .upload-container {
+            margin: 20px 150px;
+        }
+        .loader-wrapper {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loader-wrapper svg {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  animation: rotate 2s linear infinite;
+}
+
+.loader-wrapper circle {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-width: 10;
+  stroke: #007BFF; /* Using your theme color */
+  stroke-linecap: round;
+  transform: translate(5px, 5px);
+  stroke-dasharray: 440;
+  stroke-dashoffset: 440;
+  animation: animate 4s linear infinite;
+}
+
+@keyframes animate {
+  0%, 100% {
+    stroke-dashoffset: 440;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  50.1% {
+    stroke-dashoffset: 880;
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 15px 0;
+  display: none;
+}
+        .drag-file-area {
+            border: 2px dashed #007BFF;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .drag-file-area:hover {
+            background-color: #e1f0ff;
+        }
+        
+        .upload-icon {
+            font-size: 50px;
+            color: #007BFF;
+            margin-bottom: 15px;
+        }
+        
+        .dynamic-message {
+            font-size: 18px;
+            margin: 15px 0;
             color: #333;
         }
-
-        h1 {
-            text-align: center;
-            background-color: #007BFF;
-            color: #fff;
-            padding: 20px 0;
-            margin: 0;
-            font-size: 2.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        
+        .label {
+            font-size: 16px;
+            color: #666;
         }
-
+        
+        .browse-files-text {
+            color: #007BFF;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .browse-files-text:hover {
+            text-decoration: underline;
+        }
+        
+        .default-file-input {
+            opacity: 0;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+        }
+        
+        .cannot-upload-message {
+            background-color: #ffebee;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 12px 20px;
+            border-radius: 5px;
+            color: #d32f2f;
+            display: none;
+        }
+        
+        .file-block {
+            color: white;
+            background-color: #007BFF;
+            transition: all 0.3s;
+            width: 100%;
+            position: relative;
+            display: none;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 12px 20px;
+            border-radius: 5px;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+        }
+        
+        .file-icon {
+            margin-right: 10px;
+        }
+        
+        .file-name, .file-size {
+            padding: 0 5px;
+        }
+        
+        .remove-file-icon {
+            cursor: pointer;
+            color: white;
+        }
+        
+        .progress-bar {
+            display: flex;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 4px;
+            border-radius: 0 0 5px 5px;
+            background-color: #4BB543;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f9ff;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 25px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+        
+        .profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .profile img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            z-index: 1;
+        }
+        
+        .profile:hover .profile-dropdown {
+            display: block;
+        }
+        
+        .profile-dropdown a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .profile-dropdown a:hover {
+            background-color: #f1f1f1;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #007BFF, #00BFFF);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .hero h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto 30px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: white;
+            color: #007BFF;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .section-title h3 {
+            font-size: 32px;
+            color: #007BFF;
+            margin-bottom: 15px;
+        }
+        
+        .section-title p {
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .feature-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .tab-button {
+            padding: 12px 25px;
+            background-color: #e1f0ff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button:first-child {
+            border-radius: 5px 0 0 5px;
+        }
+        
+        .tab-button:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .tab-button.active {
+            background-color: #007BFF;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Form Styles */
         form {
             max-width: 800px;
             margin: 20px auto;
@@ -37,17 +562,27 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
+        
         textarea {
-            width: 96%;
+            width: 100%;
             height: 150px;
-            border: 1px solid #ddd;
+            border: 1.5px solid #000000;
             border-radius: 4px;
             padding: 10px;
             margin-bottom: 15px;
             font-size: 14px;
         }
+        textarea::placeholder {
+            color: #5d00ff;
+            font-size: 18px;
+            text-align: center;
+            padding: 20px;
+             }
 
+        textarea:focus {
+            border-color: #007bff;
+            box-shadow: 0px 0px 10px rgba(0, 123, 255, 0.5);
+        }
         input[type="file"],
         button {
             display: block;
@@ -58,48 +593,49 @@
             border: none;
             border-radius: 4px;
         }
-
+        
         input[type="file"] {
             background-color: #e9ecef;
             color: #495057;
         }
-
+        
         button {
             background-color: #007BFF;
             color: #fff;
             cursor: pointer;
             transition: background-color 0.3s;
-            width: auto
+            width: auto;
         }
-
+        
         button:hover {
             background-color: #0056b3;
         }
-
+        
+        /* Results Styles */
         #resultsTable {
-            width: 90%;
+            width: 100%;
             margin: 20px auto;
             border-collapse: collapse;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             background: #fff;
         }
-
+        
         #resultsTable th, #resultsTable td {
             padding: 12px;
             border: 1px solid #ddd;
             text-align: left;
         }
-
+        
         #resultsTable th {
             background-color: #007BFF;
             color: white;
             font-size: 1rem;
         }
-
+        
         #resultsTable tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-
+        
         #detailedCopiedTextContainer {
             max-width: 800px;
             margin: 20px auto;
@@ -109,7 +645,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             animation: fadeIn 1s ease-in-out;
         }
-
+        
         .file-copied-text {
             margin: 10px 0;
             padding: 15px;
@@ -118,18 +654,18 @@
             background-color: #e9f4ff;
             transition: transform 0.3s;
         }
-
+        
         .file-copied-text:hover {
             transform: scale(1.02);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-
+        
         .copiedText {
             color: #333;
             font-size: 14px;
             line-height: 1.6;
         }
-
+        
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -138,337 +674,926 @@
                 opacity: 1;
             }
         }
-
-        #printResults, #downloadResults {
-            width: 45%;
-            margin: 10px 2%;
-            display: inline-block;
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .button-container button {
+            width: 200px;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 40px 0;
             text-align: center;
-            font-size: 16px;
         }
-
-        #offlineResults, #onlineResults {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
         }
-
-        a {
-            color: #007BFF;
+        
+        .footer-links a {
+            color: white;
+            margin: 0 15px;
             text-decoration: none;
         }
-
-        a:hover {
+        
+        .footer-links a:hover {
             text-decoration: underline;
-        }      
-        #resultsTable {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
         }
-    
-        #resultsTable th, #resultsTable td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ddd;
+        
+        .copyright {
+            color: #aaa;
+            font-size: 14px;
         }
-    
-        #resultsTable th {
-            background-color: #007BFF;
-            color: white;
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h2 {
+                font-size: 28px;
+            }
+            
+            .hero p {
+                font-size: 16px;
+            }
+            
+            .feature-content {
+                flex-direction: column;
+            }
+            
+            .feature-text, .feature-image {
+                flex: none;
+                width: 100%;
+            }
+            
+            .feature-image {
+                margin-top: 20px;
+            }
         }
-    
-        #resultsTable td {
-            background-color: #f9f9f9;
-        }
-    
-        /* Style for the copied text section */
-        #detailedCopiedTextContainer {
-            margin-top: 30px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-    
-        #detailedCopiedTextContainer h3 {
-            margin-bottom: 15px;
-            color: #343a40;
-        }
-    
-        .file-copied-text {
-            background-color: #ffffff;  /* White background for each file's copied text */
-            padding: 15px;
-            border: 1px solid #007BFF;  /* Blue border to distinguish each block */
-            border-radius: 5px;
-            margin-top: 10px;
-            transition: transform 0.2s;  /* Add a transition effect for hover */
-        }
-    
-        .file-copied-text:hover {
-            transform: scale(1.02);  /* Slightly scale up on hover */
-        }
-    
-        .copiedText {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #495057;  /* Darker text color for better readability */
-            font-size: 14px;  /* Font size for copied text */
-        }
-        .buttonres{
-            padding-left: 35%;
-            padding-right: 35%;
-        }
-       
     </style>
-    
 </head>
 <body>
-    <h1>Plagiarism Detection System</h1>
-     <!-- Form to check plagiarism online -->
-     <form id="onlineForm">
-        <textarea id="onlineTextInput" placeholder="Enter text to check..."></textarea>
-        <label for="onlineCheckFile">Upload a PDF file for online checking:</label>
-        <input type="file" id="onlineCheckFile" accept="application/pdf">
-        <button type="submit">Check Online Plagiarism</button>
-    </form>
-    <div id="onlineResults"><hr></div>
-    <div class="buttonres">
-    <button id="printResults" style="display:none;">Print Results</button>
-    <button id="downloadResults" style="display:none;">Download Results</button>
-    </div>
-<script>
-    // Handle plagiarism check online
-    document.getElementById('onlineForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const text = document.getElementById('onlineTextInput').value;
-        const file = document.getElementById('onlineCheckFile').files[0];
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">PlagXpert</div>
+                <ul class="nav-links">
+                    <li><a href="main.html">Home</a></li>
+                
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                
+                </ul>
+                <div class="profile">
+                <i class="fa fa-user" aria-hidden="true">
+                    
+                    <span>   Profile   </span></i>
+                    <div class="profile-dropdown">
+                        <a href="#">My Account</a>
+                        <a href="#">Settings</a>
+                        <a href="#">Logout</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h2>Ensure Academic Integrity</h2>
+            <p>Our plagiarism detection system provides best accuracy and speed, offering detailed source comparisons and highlighted similarities.</p>
+            <a href="#features" class="cta-button">Start Checking</a>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h3>Choose Your Detection Method</h3>
+                <p>Select between our powerful online database check or offline document comparison for your needs.</p>
+            </div>
+            
+            <div class="feature-tabs">
+                <button class="tab-button active" onclick="openTab('online')">Online Detection</button>
+                <button class="tab-button" onclick="openTab('offline')">Offline Detection</button>
+            </div>
+            
+            <!-- Online Detection Tab - Updated with Drag & Drop -->
+            <div id="online" class="tab-content active">
+                <form id="onlineForm" class="upload-container">
+                    <textarea id="onlineTextInput" placeholder="Enter text to check..."></textarea>
+                    
+                    <div class="drag-file-area" id="onlineDragArea">
+                        <span class="material-icons-outlined upload-icon"><i class="fa-solid fa-upload"></i></span>
+                        <h3 class="dynamic-message">Drag & drop your PDF file here</h3>
+                        <label class="label">or <span class="browse-files">
+                            <input type="file" id="onlineCheckFile" class="default-file-input" accept="application/pdf">
+                            <span class="browse-files-text">browse file</span> from device
+                        </span></label>
+                    </div>
+                    
 
-        const formData = new FormData();
-        formData.append('text', text);
-        if (file) {
-            formData.append('file', file);
+                    
+                    <div class="file-block">
+                        <div class="file-info">
+                            <span class="material-icons-outlined file-icon">description</span>
+                            <span class="file-name"></span> | 
+                            <span class="file-size"></span>
+                        </div>
+                        <span class="material-icons remove-file-icon">delete</span>
+                        <div class="progress-bar"></div>
+                    </div>
+                    
+                    <button type="submit" class="upload-button">
+                        <span class="material-icons-outlined upload-button-icon"></span>
+                        Check Online Plagiarism
+                    </button>
+                </form>
+                <div class="loader-wrapper">
+                    <svg>
+                      <circle cx="70" cy="70" r="50"></circle>
+                    </svg>
+                  </div>
+                <div id="onlineResults"><hr></div>
+                <div class="button-container">
+                 <button id="printResults" style="display:none;"></button> 
+                    <button id="downloadResults" style="display:none;">Download Results</button>
+                </div>
+            </div>
+            
+            <!-- Offline Detection Tab - Updated with Drag & Drop -->
+            <div id="offline" class="tab-content">
+                <!-- Form to upload multiple PDFs for offline storage -->
+                <form id="storeForm" class="upload-container">
+                    <div class="drag-file-area" id="storeDragArea">
+                        <span class="material-icons-outlined upload-icon"><i class="fa-solid fa-upload"></i></span>
+                        <h3 class="dynamic-message">Drag & drop your PDF files here</h3>
+                        <label class="label">or <span class="browse-files">
+                            <input type="file" id="storeFiles" class="default-file-input" accept="application/pdf" multiple>
+                            <span class="browse-files-text">browse files</span> from device
+                        </span></label>
+                    </div>
+                    
+                    <span class="cannot-upload-message">
+                        <span class="material-icons-outlined">error</span>
+                        Please select files first
+                        <span class="material-icons-outlined cancel-alert-button">cancel</span>
+                    </span>
+                    
+                    <div class="file-block">
+                        <div class="file-info">
+                            <span class="material-icons-outlined file-icon">description</span>
+                            <span class="file-name"></span> | 
+                            <span class="file-size"></span>
+                        </div>
+                        <span class="material-icons remove-file-icon">delete</span>
+                        <div class="progress-bar"></div>
+                    </div>
+                    
+                    <button type="submit" class="upload-button">
+                        <span class="material-icons-outlined upload-button-icon"></span>
+                        Store Files
+                    </button>
+                </form>
+                <div id="storeResult"></div>
+
+                <!-- Form to check plagiarism offline -->
+                <form id="offlineForm" class="upload-container">
+                    <div class="drag-file-area" id="offlineDragArea">
+                        <span class="material-icons-outlined upload-icon"><i class="fa-solid fa-upload"></i></span>
+                        <h3 class="dynamic-message">Drag & drop your PDF file here</h3>
+                        <label class="label">or <span class="browse-files">
+                            <input type="file" id="checkFile" class="default-file-input" accept="application/pdf">
+                            <span class="browse-files-text">browse file</span> from device
+                        </span></label>
+                    </div>
+                    
+ 
+                    
+                    <div class="file-block">
+                        <div class="file-info">
+                            <span class="material-icons-outlined file-icon">description</span>
+                            <span class="file-name"></span> | 
+                            <span class="file-size"></span>
+                        </div>
+                        <span class="material-icons remove-file-icon">delete</span>
+                        <div class="progress-bar"></div>
+                    </div>
+                    
+                    <button type="submit" class="upload-button">
+                        <span class="material-icons-outlined upload-button-icon"></span>
+                        Check Offline Plagiarism
+                    </button>
+                </form>
+                <div class="loader-wrapper">
+                    <svg>
+                      <circle cx="70" cy="70" r="50"></circle>
+                    </svg>
+                  </div>
+                <div id="offlineResults"></div>
+
+                <!-- Table to display plagiarism results -->
+                <div id="accuracyResults">
+                    <table id="resultsTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>String Matching (%)</th>
+                                <th>Time Taken (String Matching)</th>
+                                <th>Cosine Similarity (%)</th>
+                                <th>Time Taken (Cosine Similarity)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Section to display detailed copied text -->
+                <div id="detailedCopiedTextContainer" style="display: none;">
+                    <h3>Copied Text from Each Source:</h3>
+                    <div id="detailedCopiedText"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+                <a href="#">FAQ</a>
+            </div>
+            <p class="copyright">© 2025 PlagXpert. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+      // Helper functions for loader
+      function showLoader() {
+        document.querySelector('.loader-wrapper').style.display = 'flex';
+      }
+      
+      function hideLoader() {
+        document.querySelector('.loader-wrapper').style.display = 'none';
+      }
+      
+      function showError(message, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = `<div class="error-message">
+          <span class="material-icons-outlined">error</span>
+          ${message}
+        </div>`;
+        container.querySelector('.error-message').style.display = 'block';
+        hideLoader();
+      }
+      
+      // Format URL to display only domain
+      function formatUrl(url) {
+        try {
+          const urlObj = new URL(url);
+          return urlObj.hostname.replace('www.', '');
+        } catch {
+          return url;
         }
-
-        const response = await fetch('/check_online', {
+      }
+      
+      // Calculate word count
+      function getWordCount(text) {
+        return text.trim() ? text.trim().split(/\s+/).length : 0;
+      }
+      
+      // Enhanced Online Plagiarism Check (unchanged)
+      document.getElementById('onlineForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        showLoader();
+        
+        try {
+          const text = document.getElementById('onlineTextInput').value;
+          const file = document.getElementById('onlineCheckFile').files[0];
+      
+          if (!text && !file) {
+            throw new Error('Please enter text or upload a file');
+          }
+      
+          const formData = new FormData();
+          formData.append('text', text);
+          if (file) {
+            formData.append('file', file);
+          }
+      
+          const response = await fetch('/check_online', {
             method: 'POST',
             body: formData
-        });
-        const result = await response.json();
-
-        let output = '<h3>Online Plagiarism Results:</h3>';
-
-        // Display online plagiarism results
-        if (result.copied) {
-            output += '<h4>Matching Sources:</h4>';
-            result.sources.forEach(source => {
-                output += `<p>Source: <a href="${source.source}" target="_blank">${source.source}</a></p>`;
-                output += `<p>Matching Text: <span style="background-color: yellow;">${source.matching_text}</span></p>`;
-            });
-            const copiedPercentage = result.percentage_copied.toFixed(2);
-            output += `<h2 class="highlighted">Online Copied Percentage: ${copiedPercentage}%</h2>`;
-            output += '<canvas id="pieChart" style="max-width: 400px; margin: 20px auto;"></canvas>';
-        } else {
-            output += '<p>No matching sources found.</p>';
-        }
-
-        const resultsDiv = document.getElementById('onlineResults');
-        resultsDiv.innerHTML = output;
-
-        // Generate the pie chart if results are available
-        if (result.copied) {
-            const ctx = document.getElementById('pieChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Copied', 'Original'],
-                    datasets: [{
-                        data: [result.percentage_copied, 100 - result.percentage_copied],
-                        backgroundColor: ['#FF5733', '#33FF57']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        }
-                    }
-                }
-            });
-        }
-
-        // Show the print and download buttons
-        document.getElementById('printResults').style.display = 'inline-block';
-        document.getElementById('downloadResults').style.display = 'inline-block';
-    });
-
-    // Print Results
-    document.getElementById('printResults').addEventListener('click', function () {
-        const resultsDiv = document.getElementById('onlineResults');
-        const canvas = document.querySelector('#pieChart');
-
-        if (canvas) {
-            // Convert canvas to image
-            const imgData = canvas.toDataURL('image/png');
-            const imgElement = `<img src="${imgData}" style="max-width: 100%; margin: 20px auto;"/>`;
-            const content = resultsDiv.innerHTML.replace('<canvas id="pieChart"', imgElement);
-
-            const styles = `<style>
-                body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
-                h3, h4 { color: #0056b3; }
-                p { margin: 5px 0; }
-                a { color: #0056b3; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-                .highlighted { font-size: 1.5em; font-weight: bold; color: #FF5733; text-align: center; margin-top: 20px; }
-                span[style] { background-color: yellow; padding: 2px; }
-            </style>`;
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.open();
-            printWindow.document.write(`
-                <html>
-                    <head><title>Plagiarism Results</title>${styles}</head>
-                    <body>${content}</body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        }
-    });
-
- document.getElementById('downloadResults').addEventListener('click', function () {
-            const resultsDiv = document.getElementById('onlineResults');
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-
-            // Convert HTML to PDF
-            pdf.html(resultsDiv, {
-                callback: function (doc) {
-                    doc.save('plagiarism_results.pdf');
-                },
-                x: 10,
-                y: 10
-            });
-        });
-</script>
-
-        <!-- Form to upload multiple PDFs for offline storage -->
-    <form id="storeForm" action="/store_files" method="POST" enctype="multipart/form-data">
-        <label for="storeFiles">Upload PDF files for storage (Offline Mode):</label>
-        <input type="file" id="storeFiles" name="files" multiple accept="application/pdf">
-        <button type="submit">Store Files</button>
-    </form>
-    <div id="storeResult"></div>
-
-    <!-- Form to check plagiarism offline -->
-    <form id="offlineForm" action="/check_offline" method="POST" enctype="multipart/form-data">
-        <label for="checkFile">Upload a PDF file to check against stored PDFs (Offline Mode):</label>
-        <input type="file" id="checkFile" accept="application/pdf">
-        <button type="submit">Check Offline Plagiarism</button>
-    </form>
-    <div id="offlineResults"></div>
-
-    <!-- Table to display plagiarism results -->
-    <div id="accuracyResults">
-        <table id="resultsTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Source</th>
-                    <th>String Matching (%)</th>
-                    <th>Time Taken (String Matching)</th>
-                    <th>Cosine Similarity (%)</th>
-                    <th>Time Taken (Cosine Similarity)</th>
-                    <!-- Removed LCS and time columns -->
-                </tr>
-            </thead>
-            <tbody id="resultsTableBody"></tbody>
-        </table>
-    </div>
-
-    <!-- Section to display detailed copied text -->
-    <div id="detailedCopiedTextContainer" style="display: none;">
-        <h3>Copied Text from Each Source:</h3>
-        <div id="detailedCopiedText"></div>
-    </div>
-
-    <script>
-        // Handle file storage form submission
-        document.getElementById('storeForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const files = document.getElementById('storeFiles').files;
-
-            const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append('files', files[i]);
+          });
+          
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          
+          const result = await response.json();
+      
+          // Calculate statistics
+          const originalWordCount = getWordCount(text);
+          const copiedWordCount = result.copied ? 
+            Math.round(originalWordCount * result.percentage_copied / 100) : 0;
+          const originalPercentage = (100 - result.percentage_copied).toFixed(2);
+      
+          let output = `
+            <div class="results-container">
+              <div class="results-header">
+                <h3><i class="fas fa-search"></i> Plagiarism Analysis Report</h3>
+                <div class="similarity-score pulse" style="background-color: ${result.percentage_copied > 30 ? '#FF5733' : '#4BB543'}">
+                  ${result.percentage_copied.toFixed(2)}% Similarity
+                </div>
+              </div>
+              
+              <div class="results-summary">
+                <div class="summary-item">
+                  <span><i class="fas fa-file-alt"></i> Document:</span>
+                  <strong>${file ? file.name : 'Text Input'}</strong>
+                </div>
+                <div class="summary-item">
+                  <span><i class="fas fa-copy"></i> Potential Matches:</span>
+                  <strong>${copiedWordCount} words (${result.percentage_copied.toFixed(2)}%)</strong>
+                </div>
+                <div class="summary-item">
+                  <span><i class="fas fa-star"></i> Original Content:</span>
+                  <strong>${originalPercentage}%</strong>
+                </div>
+              </div>
+          `;
+      
+          if (result.copied) {
+            output += `<h4><i class="fas fa-clipboard-list"></i> Detailed Matches (${result.sources.length} sources found):</h4>`;
+            
+            // Show first 3 results by default
+            const defaultDisplayCount = 3;
+            let resultsToShow = result.sources;
+            let hiddenResults = [];
+            
+            if (result.sources.length > defaultDisplayCount) {
+              resultsToShow = result.sources.slice(0, defaultDisplayCount);
+              hiddenResults = result.sources.slice(defaultDisplayCount);
             }
-
-            const response = await fetch('/store_files', {
-                method: 'POST',
-                body: formData
+      
+            // Display initial results
+            resultsToShow.forEach((source, index) => {
+              const similarity = source.similarity ? source.similarity.toFixed(2) : 'N/A';
+              output += `
+                <div class="source-result">
+                  <div class="source-header">
+                    <div>
+                      <i class="fas fa-link"></i> 
+                      <a href="${source.source}" target="_blank" class="source-url">
+                        Source ${index + 1}: ${formatUrl(source.source)}
+                      </a>
+                    </div>
+                  </div>
+                  <div class="matched-text">
+                    <strong>Matching Text:</strong>
+                    <p>${source.matching_text}</p>
+                  </div>
+                </div>
+              `;
             });
-            const result = await response.json();
-            document.getElementById('storeResult').innerHTML = result.message;
-        });
-
-        // Handle offline plagiarism check form submission
-        document.getElementById('offlineForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+      
+            // Add hidden results if there are more
+            if (hiddenResults.length > 0) {
+              output += `<div id="hiddenResults" class="hidden-results">`;
+              hiddenResults.forEach((source, index) => {
+                const similarity = source.similarity ? source.similarity.toFixed(2) : 'N/A';
+                output += `
+                  <div class="source-result">
+                    <div class="source-header">
+                      <div>
+                        <i class="fas fa-link"></i> 
+                        <a href="${source.source}" target="_blank" class="source-url">
+                          Source ${index + defaultDisplayCount + 1}: ${formatUrl(source.source)}
+                        </a>
+                      </div>
+                    </div>
+                    <div class="matched-text">
+                      <strong>Matching Text:</strong>
+                      <p>${source.matching_text}</p>
+                    </div>
+                  </div>
+                `;
+              });
+              output += `</div>`;
+              
+              output += `
+                <div class="show-more-container">
+                  <button class="show-more-btn pulse" onclick="toggleHiddenResults()">
+                    <i class="fas fa-chevron-down"></i> Show ${hiddenResults.length} More Results
+                  </button>
+                </div>
+              `;
+            }
+      
+            // Add pie chart
+            output += `
+              <div style="text-align: center; margin: 30px 0;">
+                <canvas id="pieChart" style="max-width: 400px; margin: 0 auto;"></canvas>
+              </div>
+            `;
+            
+          } else {
+            output += `
+              <div class="no-results">
+                <i class="fas fa-check-circle" style="color: #4BB543; font-size: 50px; margin: 20px 0;"></i>
+                <h4>No matching sources found!</h4>
+                <p>Your content appears to be original.</p>
+              </div>
+            `;
+          }
+      
+          output += `</div>`;
+          const resultsDiv = document.getElementById('onlineResults');
+          resultsDiv.innerHTML = output;
+      
+          if (result.copied) {
+            renderPieChart(result.percentage_copied);
+          }
+      
+          document.getElementById('downloadResults').style.display = 'inline-block';
+          
+        } catch (error) {
+          showError(error.message, 'onlineResults');
+          console.error('Error:', error);
+        } finally {
+          hideLoader();
+        }
+      });
+      
+      // Improved Offline Plagiarism Check
+      document.getElementById('offlineForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        showLoader();
+        
+        try {
+            // Clear previous results
+            document.getElementById('offlineResults').innerHTML = '';
+            document.getElementById('resultsTable').style.display = 'none';
+            document.getElementById('detailedCopiedTextContainer').style.display = 'none';
+    
             const file = document.getElementById('checkFile').files[0];
-
-            const formData = new FormData();
-            if (file) {
-                formData.append('file', file);
+            if (!file) {
+                throw new Error('Please upload a PDF file to check');
             }
-
+    
+            const formData = new FormData();
+            formData.append('file', file);
+    
             const response = await fetch('/check_offline', {
                 method: 'POST',
                 body: formData
             });
+            
+            if (!response.ok) {
+                throw new Error('Failed to check for plagiarism');
+            }
+            
             const result = await response.json();
-
-            const tableBody = document.getElementById('resultsTableBody');
-            tableBody.innerHTML = '';  // Clear previous results
-
-            if (result.copied) {
-                // Populate the table with comparison results
-                result.results.forEach(entry => {
+            console.log("Server response:", result); // Debug log
+    
+            let output = `
+                <div class="results-container">
+                    <div class="results-header">
+                        <h3><i class="fas fa-search"></i> Offline Plagiarism Report</h3>
+                        <div class="similarity-score">
+                            ${result.copied ? 'Potential Plagiarism Detected' : 'No Plagiarism Found'}
+                        </div>
+                    </div>
+                    
+                    <div class="results-summary">
+                        <div class="summary-item">
+                            <span><i class="fas fa-file-alt"></i> Checked File:</span>
+                            <strong>${file.name}</strong>
+                        </div>
+                        <div class="summary-item">
+                            <span><i class="fas fa-percentage"></i> Overall Similarity:</span>
+                            <strong>${result.copied ? (result.percentage_copied || 0).toFixed(2) + '%' : '0%'}</strong>
+                        </div>
+                    </div>
+            `;
+    
+            if (result.copied && result.sources && Array.isArray(result.sources)) {
+                output += `
+                    <h4><i class="fas fa-clipboard-list"></i> Comparison Results:</h4>
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>String Match</th>
+                                <th>Cosine Similarity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody"></tbody>
+                    </table>
+                    
+                    <h4 style="margin-top: 30px;"><i class="fas fa-copy"></i> Copied Text Segments:</h4>
+                    <div id="detailedCopiedText"></div>
+                `;
+    
+                // Safely populate the table
+                const tableBody = document.getElementById('resultsTableBody');
+                tableBody.innerHTML = '';
+                
+                (result.sources || []).forEach((source) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${entry.file}</td>
-                        <td>${entry.string_match.toFixed(2)}</td>
-                        <td>${entry.time_taken_string_match.toFixed(2)} s</td>
-                        <td>${entry.cosine_similarity.toFixed(2)}</td>
-                        <td>${entry.time_taken_cosine.toFixed(2)} s</td>
+                        <td>${source.file || 'Unknown'}</td>
+                        <td>${(source.string_match || 0).toFixed(2)}%</td>
+                        <td>${(source.cosine_similarity || 0).toFixed(2)}%</td>
                     `;
                     tableBody.appendChild(row);
                 });
-
-                // Show the table
-                document.getElementById('resultsTable').style.display = 'table';
-
-                // Display detailed copied text for each source
-                const detailedCopiedTextContainer = document.getElementById('detailedCopiedText');
-                detailedCopiedTextContainer.innerHTML = ''; // Clear previous detailed copied texts
-                result.detailed_copied_texts.forEach(item => {
+    
+                // Safely display detailed copied text
+                const detailedCopiedText = document.getElementById('detailedCopiedText');
+                detailedCopiedText.innerHTML = '';
+                
+                (result.detailed_copied_texts || []).forEach((item) => {
                     const copiedTextDiv = document.createElement('div');
                     copiedTextDiv.className = 'file-copied-text';
-                    copiedTextDiv.innerHTML = `<strong>From File: ${item.file}</strong><p class="copiedText">${item.copied_text}</p>`;
-                    detailedCopiedTextContainer.appendChild(copiedTextDiv);
+                    copiedTextDiv.innerHTML = `
+                        <div class="details-header">
+                            <h5>From: ${item.file || 'Unknown'}</h5>
+                            <span class="similarity-badge">
+                                ${(result.sources?.find(s => s.file === item.file)?.string_match || 0).toFixed(2)}% match
+                            </span>
+                        </div>
+                        <div class="copied-text">
+                            ${item.copied_text || 'No direct text matches found'}
+                        </div>
+                    `;
+                    detailedCopiedText.appendChild(copiedTextDiv);
                 });
+    
+                document.getElementById('resultsTable').style.display = 'table';
                 document.getElementById('detailedCopiedTextContainer').style.display = 'block';
-
             } else {
-                document.getElementById('offlineResults').innerHTML = '<p>No matching sources found.</p>';
-                document.getElementById('detailedCopiedTextContainer').style.display = 'none'; // Hide if no matches
+                output += `
+                    <div class="no-results">
+                        <i class="fas fa-check-circle" style="color: #4BB543; font-size: 50px; margin: 20px 0;"></i>
+                        <h4>No plagiarism detected!</h4>
+                        <p>${result.message || 'No significant similarities were found with your stored documents.'}</p>
+                    </div>
+                `;
             }
-        });
-    </script>
     
-    
+            output += `</div>`;
+            document.getElementById('offlineResults').innerHTML = output;
+            
+        } catch (error) {
+            document.getElementById('offlineResults').innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${error.message}
+                </div>
+            `;
+            console.error('Error:', error);
+        } finally {
+            hideLoader();
+        }
+    });
+
+      // Toggle hidden results
+      function toggleHiddenResults() {
+          const hiddenResults = document.getElementById('hiddenResults');
+          const showMoreBtn = document.querySelector('.show-more-btn');
+          
+          if (hiddenResults.style.display === 'none' || !hiddenResults.style.display) {
+              hiddenResults.style.display = 'block';
+              showMoreBtn.innerHTML = '<i class="fas fa-chevron-up"></i> Show Less';
+          } else {
+              hiddenResults.style.display = 'none';
+              showMoreBtn.innerHTML = '<i class="fas fa-chevron-down"></i> Show More';
+          }
+      }
+      
+      // Render pie chart
+      function renderPieChart(percentageCopied) {
+          const ctx = document.getElementById('pieChart').getContext('2d');
+          new Chart(ctx, {
+              type: 'pie',
+              data: {
+                  labels: ['Similar Content', 'Original Content'],
+                  datasets: [{
+                      data: [percentageCopied, 100 - percentageCopied],
+                      backgroundColor: ['#FF5733', '#4BB543'],
+                      borderWidth: 0
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  plugins: {
+                      legend: {
+                          position: 'bottom',
+                          labels: {
+                              font: {
+                                  size: 14
+                              },
+                              padding: 20
+                          }
+                      },
+                      tooltip: {
+                          callbacks: {
+                              label: function(context) {
+                                  return `${context.label}: ${context.raw.toFixed(2)}%`;
+                              }
+                          }
+                      }
+                  },
+                  animation: {
+                      animateScale: true,
+                      animateRotate: true
+                  }
+              }
+          });
+      }
+      
+      document.getElementById('downloadResults').addEventListener('click', async function () {
+          const { jsPDF } = window.jspdf;
+          showLoader();
+
+          try {
+              const resultsDiv = document.getElementById('onlineResults');
+              const scaleFactor = 3.5;
+
+              const canvas = await html2canvas(resultsDiv, {
+                  scale: scaleFactor,
+                  logging: false,
+                  useCORS: true,
+                  allowTaint: true,
+                  backgroundColor: null,
+                  imageTimeout: 0,
+              });
+
+              const pdf = new jsPDF('p', 'mm', 'a4');
+              const imgWidth = 190;
+              const pageHeight = 297;
+              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+              let yPos = 40;
+              let remainingHeight = imgHeight;
+              let startY = yPos;
+
+              pdf.setFontSize(22);
+              pdf.setTextColor(0, 123, 255);
+              pdf.text('Plagiarism Analysis Report', 105, 20, { align: 'center' });
+
+              pdf.setFontSize(12);
+              pdf.setTextColor(100, 100, 100);
+              pdf.text(`Generated on ${new Date().toLocaleDateString()} by PlagXpert`, 105, 30, { align: 'center' });
+
+              const imageData = canvas.toDataURL('image/png', 1.0);
+              while (remainingHeight > 0) {
+                  pdf.addImage(imageData, 'PNG', 10, startY, imgWidth, imgHeight, '', 'FAST');
+                  remainingHeight -= (pageHeight - 50);
+                  startY = -remainingHeight;
+
+                  if (remainingHeight > 0) {
+                      pdf.addPage();
+                  }
+              }
+
+              pdf.setFontSize(10);
+              pdf.setTextColor(150, 150, 150);
+              pdf.text('Confidential Report - © ' + new Date().getFullYear() + ' PlagXpert', 105, 287, { align: 'center' });
+
+              pdf.save(`plagiarism_report_${new Date().getTime()}.pdf`);
+
+          } catch (error) {
+              console.error('Error generating PDF:', error);
+              alert('An error occurred while generating the PDF. Please try again.');
+          } finally {
+              hideLoader();
+          }
+      });
+
+      // Tab functionality
+      function openTab(tabName) {
+          const tabContents = document.getElementsByClassName("tab-content");
+          for (let i = 0; i < tabContents.length; i++) {
+              tabContents[i].classList.remove("active");
+          }
+          
+          const tabButtons = document.getElementsByClassName("tab-button");
+          for (let i = 0; i < tabButtons.length; i++) {
+              tabButtons[i].classList.remove("active");
+          }
+          
+          document.getElementById(tabName).classList.add("active");
+          event.currentTarget.classList.add("active");
+      }
+      
+      // Handle file storage form submission
+      document.getElementById('storeForm').addEventListener('submit', async function (e) {
+          e.preventDefault();
+          const files = document.getElementById('storeFiles').files;
+      
+          const formData = new FormData();
+          for (let i = 0; i < files.length; i++) {
+              formData.append('files', files[i]);
+          }
+      
+          const response = await fetch('/store_files', {
+              method: 'POST',
+              body: formData
+          });
+          const result = await response.json();
+          document.getElementById('storeResult').innerHTML = result.message;
+      });
+      
+      // Drag and drop functionality
+      const onlineDragArea = document.getElementById("onlineDragArea");
+      const onlineFileInput = document.getElementById("onlineCheckFile");
+      const onlineUploadButton = document.querySelector("#onlineForm .upload-button");
+      const onlineFileBlock = document.querySelector("#onlineForm .file-block");
+      const onlineFileName = document.querySelector("#onlineForm .file-name");
+      const onlineFileSize = document.querySelector("#onlineForm .file-size");
+      const onlineProgressBar = document.querySelector("#onlineForm .progress-bar");
+      const onlineRemoveFileButton = document.querySelector("#onlineForm .remove-file-icon");
+      const onlineCannotUploadMessage = document.querySelector("#onlineForm .cannot-upload-message");
+      const onlineCancelAlertButton = document.querySelector("#onlineForm .cancel-alert-button");
+      const onlineDynamicMessage = document.querySelector("#onlineForm .dynamic-message");
+      const onlineUploadIcon = document.querySelector("#onlineForm .upload-icon");
+      
+      const storeDragArea = document.getElementById("storeDragArea");
+      const storeFileInput = document.getElementById("storeFiles");
+      const storeUploadButton = document.querySelector("#storeForm .upload-button");
+      const storeFileBlock = document.querySelector("#storeForm .file-block");
+      const storeFileName = document.querySelector("#storeForm .file-name");
+      const storeFileSize = document.querySelector("#storeForm .file-size");
+      const storeProgressBar = document.querySelector("#storeForm .progress-bar");
+      const storeRemoveFileButton = document.querySelector("#storeForm .remove-file-icon");
+      const storeCannotUploadMessage = document.querySelector("#storeForm .cannot-upload-message");
+      const storeCancelAlertButton = document.querySelector("#storeForm .cancel-alert-button");
+      const storeDynamicMessage = document.querySelector("#storeForm .dynamic-message");
+      const storeUploadIcon = document.querySelector("#storeForm .upload-icon");
+      
+      const offlineDragArea = document.getElementById("offlineDragArea");
+      const offlineFileInput = document.getElementById("checkFile");
+      const offlineUploadButton = document.querySelector("#offlineForm .upload-button");
+      const offlineFileBlock = document.querySelector("#offlineForm .file-block");
+      const offlineFileName = document.querySelector("#offlineForm .file-name");
+      const offlineFileSize = document.querySelector("#offlineForm .file-size");
+      const offlineProgressBar = document.querySelector("#offlineForm .progress-bar");
+      const offlineRemoveFileButton = document.querySelector("#offlineForm .remove-file-icon");
+      const offlineCannotUploadMessage = document.querySelector("#offlineForm .cannot-upload-message");
+      const offlineCancelAlertButton = document.querySelector("#offlineForm .cancel-alert-button");
+      const offlineDynamicMessage = document.querySelector("#offlineForm .dynamic-message");
+      const offlineUploadIcon = document.querySelector("#offlineForm .upload-icon");
+      
+      const isAdvancedUpload = (function() {
+          const div = document.createElement('div');
+          return (('draggable' in div) || ('ondragstart' in div && 'ondrop' in div)) && 
+                 'FormData' in window && 'FileReader' in window;
+      })();
+      
+      function setupFormEvents(formType) {
+          const fileInput = formType === 'online' ? onlineFileInput : 
+                           formType === 'store' ? storeFileInput : offlineFileInput;
+          const uploadButton = formType === 'online' ? onlineUploadButton : 
+                              formType === 'store' ? storeUploadButton : offlineUploadButton;
+          const cannotUploadMessage = formType === 'online' ? onlineCannotUploadMessage : 
+                                     formType === 'store' ? storeCannotUploadMessage : offlineCannotUploadMessage;
+          
+          fileInput.addEventListener("change", function(e) {
+              handleFileSelection(this.files[0], formType);
+          });
+          
+          uploadButton.addEventListener("click", function(e) {
+              if (!fileInput.files[0]) {
+                  cannotUploadMessage.style.display = "flex";
+                  e.preventDefault();
+              }
+          });
+      }
+      
+      function handleFileSelection(file, formType) {
+          const uploadIcon = formType === 'online' ? onlineUploadIcon : 
+                           formType === 'store' ? storeUploadIcon : offlineUploadIcon;
+          const dynamicMessage = formType === 'online' ? onlineDynamicMessage : 
+                               formType === 'store' ? storeDynamicMessage : offlineDynamicMessage;
+          const fileName = formType === 'online' ? onlineFileName : 
+                          formType === 'store' ? storeFileName : offlineFileName;
+          const fileSize = formType === 'online' ? onlineFileSize : 
+                         formType === 'store' ? storeFileSize : offlineFileSize;
+          const fileBlock = formType === 'online' ? onlineFileBlock : 
+                           formType === 'store' ? storeFileBlock : offlineFileBlock;
+          
+          uploadIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+          dynamicMessage.innerHTML = 'File Selected Successfully!';
+          fileName.innerHTML = file.name;
+          fileSize.innerHTML = (file.size / 1024).toFixed(1) + " KB";
+          fileBlock.style.display = "flex";
+      }
+      
+      function resetFileInput(formType) {
+          const fileBlock = formType === 'online' ? onlineFileBlock : 
+                           formType === 'store' ? storeFileBlock : offlineFileBlock;
+          const fileInput = formType === 'online' ? onlineFileInput : 
+                           formType === 'store' ? storeFileInput : offlineFileInput;
+          const uploadIcon = formType === 'online' ? onlineUploadIcon : 
+                           formType === 'store' ? storeUploadIcon : offlineUploadIcon;
+          const dynamicMessage = formType === 'online' ? onlineDynamicMessage : 
+                                formType === 'store' ? storeDynamicMessage : offlineDynamicMessage;
+          
+          fileBlock.style.display = "none";
+          fileInput.value = '';
+          uploadIcon.innerHTML = '<i class="fa-solid fa-upload"></i>';
+          dynamicMessage.innerHTML = formType === 'store' ? 
+              'Drag & drop your PDF files here' : 'Drag & drop your PDF file here';
+      }
+      
+      // Initialize all forms
+      setupFormEvents('online');
+      setupFormEvents('store');
+      setupFormEvents('offline');
+      
+      // Setup drag and drop for all forms if supported
+      if (isAdvancedUpload) {
+          setupDragAndDrop('online');
+          setupDragAndDrop('store');
+          setupDragAndDrop('offline');
+      }
+      
+      function setupDragAndDrop(formType) {
+          const dragArea = formType === 'online' ? onlineDragArea : 
+                          formType === 'store' ? storeDragArea : offlineDragArea;
+          const fileInput = formType === 'online' ? onlineFileInput : 
+                          formType === 'store' ? storeFileInput : offlineFileInput;
+          const uploadIcon = formType === 'online' ? onlineUploadIcon : 
+                           formType === 'store' ? storeUploadIcon : offlineUploadIcon;
+          const dynamicMessage = formType === 'online' ? onlineDynamicMessage : 
+                               formType === 'store' ? storeDynamicMessage : offlineDynamicMessage;
+          
+          ["drag", "dragstart", "dragend", "dragover", "dragenter", "dragleave", "drop"].forEach(evt => {
+              dragArea.addEventListener(evt, e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+              });
+          });
+          
+          ["dragover", "dragenter"].forEach(evt => {
+              dragArea.addEventListener(evt, () => {
+                  uploadIcon.innerHTML = 'file_download';
+                  dynamicMessage.innerHTML = 'Drop your file here!';
+                  dragArea.style.backgroundColor = '#e1f0ff';
+              });
+          });
+         
+          ["dragleave", "dragend"].forEach(evt => {
+              dragArea.addEventListener(evt, () => {
+                  uploadIcon.innerHTML = 'file_upload';
+                  dynamicMessage.innerHTML = formType === 'store' ? 
+                      'Drag & drop your PDF files here' : 'Drag & drop your PDF file here';
+                  dragArea.style.backgroundColor = '';
+              });
+          });
+          
+          dragArea.addEventListener("drop", e => {
+              uploadIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+              dynamicMessage.innerHTML = 'File Dropped Successfully!';
+              dragArea.style.backgroundColor = '';
+              
+              const files = e.dataTransfer.files;
+              if (files.length > 0) {
+                  fileInput.files = files;
+                  handleFileSelection(files[0], formType);
+              }
+          });
+      }
+      
+      // Add click event for remove file buttons
+      onlineRemoveFileButton.addEventListener("click", () => resetFileInput('online'));
+      storeRemoveFileButton.addEventListener("click", () => resetFileInput('store'));
+      offlineRemoveFileButton.addEventListener("click", () => resetFileInput('offline'));
+      
+      // Add click event for cancel alert buttons
+      onlineCancelAlertButton.addEventListener("click", () => onlineCannotUploadMessage.style.display = "none");
+      storeCancelAlertButton.addEventListener("click", () => storeCannotUploadMessage.style.display = "none");
+      offlineCancelAlertButton.addEventListener("click", () => offlineCannotUploadMessage.style.display = "none");
+</script>
 </body>
 </html>
