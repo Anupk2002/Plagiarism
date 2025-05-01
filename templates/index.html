@@ -716,6 +716,7 @@
   float: right;
   padding: 0.1rem 0 0 0;
   font-size: 0.875rem;
+  margin-top: -20px; 
 }
         button {
             background-color: #007BFF;
@@ -912,7 +913,7 @@
                     <div class="wrapper">
                         <textarea id="onlineTextInput" placeholder="Enter text to check..." maxlength="1500"></textarea>
                         <div id="the-count">
-                          <span id="current">0</span><span id="maximum"> words</span>
+                          <span id="current">0</span><span id="maximum"> /1500</span>
                         </div>
                       </div>
                       
@@ -972,37 +973,17 @@
                         <span class="material-icons-outlined upload-button-icon"></span>
                         Check Online Plagiarism
                     </button>
+                    <div class="loader-wrapper">
+                        <svg>
+                          <circle cx="70" cy="70" r="50"></circle>
+                        </svg>
+                      </div>
                 </form>
-                <div class="loader-wrapper">
-                    <svg>
-                      <circle cx="70" cy="70" r="50"></circle>
-                    </svg>
-                  </div>
+
+
                 <div id="onlineResults"><hr></div>
                 <div class="button-container">
                  <button id="printResults" style="display:none;"></button> 
-                 <button onclick="downloadAsPDF()">Download as PDF</button>
-                 <script>
-                    function downloadAsPDF() {
-                      const element = document.getElementById('onlineResults');
-                      
-                      // Configuration options
-                      const options = {
-                        margin:       10,
-                        filename:     'results.pdf',
-                        image:        { type: 'jpeg', quality: 0.98 }, // Higher quality image
-                        html2canvas:  { 
-                          scale: 3, // Higher scale for better quality
-                          letterRendering: true,
-                          useCORS: true 
-                        },
-                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                      };
-                    
-                      // Generate and download PDF
-                      html2pdf().set(options).from(element).save();
-                    }
-                    </script>
                     
                     <button id="downloadResults" style="display:none;">Download Results</button>
                 </div>
@@ -1050,6 +1031,11 @@
                 <span class="material-icons-outlined upload-button-icon"></span>
                 Check Offline Plagiarism
             </button>
+            <div class="loader-wrapper">
+                <svg>
+                  <circle cx="70" cy="70" r="50"></circle>
+                </svg>
+              </div>
         </form>
         
         <div id="offlineResults"></div>
